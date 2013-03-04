@@ -1,0 +1,4 @@
+# Fix relative paths of poorly written themes
+if (req.url ~ "fancybox/.*png$") {
+	set bereq.url = regsub(req.url, "(^.*fancybox/)(.*)", "/wp-content/themes/mazine/js/fancybox/\2");
+}
