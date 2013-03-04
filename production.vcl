@@ -253,9 +253,10 @@ sub vcl_fetch {
 # Last chance to modify headers that are sent to the client
 sub vcl_deliver {
     if (obj.hits > 0) {
-        set resp.http.X-Cache = "cached";
+        set resp.http.X-Fett = "Boba";
+	set resp.http.X-Clon = obj.hits;
     } else {
-        set resp.http.x-Cache = "uncached";
+        set resp.http.x-Fett = "Jango";
     }
 
     # Remove some headers: PHP version
