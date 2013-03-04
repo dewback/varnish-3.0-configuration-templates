@@ -200,6 +200,7 @@ sub vcl_miss {
         purge;
         error 200 "purged";
     }
+    # include custom vcl_miss logic
     include "custom.miss.vcl";
     return (fetch);
 }
