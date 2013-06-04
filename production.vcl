@@ -41,6 +41,7 @@ sub vcl_recv {
             req.request != "POST" &&
             req.request != "TRACE" &&
             req.request != "OPTIONS" &&
+            req.request != "PATCH" &&
             req.request != "DELETE") {
         /* Non-RFC2616 or CONNECT which is weird. */
         return (pipe);
@@ -91,6 +92,7 @@ sub vcl_recv {
 
     # Remove any Google Analytics based cookies
     set req.http.Cookie = regsuball(req.http.Cookie, "__utm.=[^;]+(; )?", "");
+    set req.http.Cookie = regsuball(req.http.Cookie, "_ga=[^;]+(; )?", "");
     set req.http.Cookie = regsuball(req.http.Cookie, "utmctr=[^;]+(; )?", "");
     set req.http.Cookie = regsuball(req.http.Cookie, "utmcmd.=[^;]+(; )?", "");
     set req.http.Cookie = regsuball(req.http.Cookie, "utmccn.=[^;]+(; )?", "");
@@ -98,8 +100,14 @@ sub vcl_recv {
     # Remove the Quant Capital cookies (added by some plugin, all __qca)
     set req.http.Cookie = regsuball(req.http.Cookie, "__qc.=[^;]+(; )?", "");
 
+    # Remove the AddThis cookies
+    set req.http.Cookie = regsuball(req.http.Cookie, "__atuvc=[^;]+(; )?", "");
+
+    # Remove a ";" prefix in the cookie if present
+    set req.http.Cookie = regsuball(req.http.Cookie, "^;\s*", "");
+
     # Are there cookies left with only spaces or that are empty?
-    if (req.http.cookie ~ "^ *$") {
+    if (req.http.cookie ~ "^\s*$") {
         unset req.http.cookie;
     }
 
@@ -174,11 +182,6 @@ sub vcl_hash {
     }
     if (req.http.Authorization) {
         hash_data(req.http.Authorization);
-    }
-
-    # If the client supports compression, keep that in a different cache
-    if (req.http.Accept-Encoding) {
-        hash_data(req.http.Accept-Encoding);
     }
 
     return (hash);
