@@ -260,7 +260,7 @@ sub vcl_deliver {
         set resp.http.X-Fett = "Boba";
 	set resp.http.X-Clon = obj.hits;
     } else {
-        set resp.http.x-Fett = "Jango";
+        set resp.http.X-Fett = "Jango";
     }
 
     # Remove some headers: PHP version
