@@ -18,7 +18,7 @@ if (req.url ~ "install\.php|update\.php|cron\.php") {
 }
 
 # Uncomment this to trigger the vcl_error() subroutine, which will HTML output you some variables (HTTP 700 = pretty debug)
-#error 700;
+#return (synth(700));
 
 # Anything else left?
 if (!req.http.cookie) {

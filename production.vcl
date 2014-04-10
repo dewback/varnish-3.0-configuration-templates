@@ -1,6 +1,8 @@
 # Default backend definition.  Set this to point to your content server.
 # all paths relative to varnish option vcl_dir
 
+vcl 4.0;
+
 include "custom.backend.vcl";
 include "custom.acl.vcl";
 
@@ -8,7 +10,7 @@ include "custom.acl.vcl";
 sub vcl_recv {
     # shortcut for DFind requests
     if (req.url ~ "^/w00tw00t") {
-        error 404 "Not Found";
+        return (synth(404, "Not Found"));
     }
 
     if (req.restarts == 0) {
@@ -26,7 +28,7 @@ sub vcl_recv {
     if (req.request == "PURGE") {
         if (!client.ip ~ purge) {
             # Not from an allowed IP? Then die with an error.
-            error 405 "This IP is not allowed to send PURGE requests.";
+            return (synth(405, "This IP is not allowed to send PURGE requests."));
         }
 
         # If you got this stage (and didn't error out above), do a cache-lookup
@@ -85,15 +87,15 @@ sub vcl_recv {
     # This is an example to redirect with a 301/302 HTTP status code from within Varnish
     # if (req.http.Host ~ "secure.mysite.tld") {
     #   # We may want to force our users from the secure site to the HTTPs version?
-    #   error 720 "https://secure.mysite.tld";
+    #   return (synth(720, "https://secure.mysite.tld"));
     #   # If you want to keep the URLs intact, this also works:
-    #   error 720 "https://" + req.http.Host + req.url;
+    #   return (synth(720, "https://" + req.http.Host + req.url));
     # }
     #
     # Or to force a 302 temporary redirect, use error 721
     # if (req.http.Host ~ "temp.mysite.tld") {
     #   # Temporary redirect
-    #   error 721 "http://mysite.tld/temp";
+    #   return (synth(721, "http://mysite.tld/temp"));
     # }
     #
 
@@ -207,7 +209,7 @@ sub vcl_hit {
     # Allow purges
     if (req.request == "PURGE") {
         purge;
-        error 200 "purged";
+        return (synth(200, "purged"));
     }
 
     return (deliver);
@@ -217,7 +219,7 @@ sub vcl_miss {
     # Allow purges
     if (req.request == "PURGE") {
         purge;
-        error 200 "purged";
+        return (synth(200, "purged"));
     }
     # include custom vcl_miss logic
     include "custom.miss.vcl";
@@ -304,13 +306,13 @@ sub vcl_error {
         include "conf.d/error-404.vcl";
     } elseif (obj.status == 720) {
         # We use this special error status 720 to force redirects with 301 (permanent) redirects
-        # To use this, call the following from anywhere in vcl_recv: error 720 "http://host/new.html"
+        # To use this, call the following from anywhere in vcl_recv: return (synth(720, "http://host/new.html"))
         set obj.status = 301;
         set obj.http.Location = obj.response;
         return (deliver);
     } elseif (obj.status == 721) {
         # And we use error status 721 to force redirects with a 302 (temporary) redirect
-        # To use this, call the following from anywhere in vcl_recv: error 720 "http://host/new.html"
+        # To use this, call the following from anywhere in vcl_recv: return (synth(720, "http://host/new.html"))
         set obj.status = 302;
         set obj.http.Location = obj.response;
         return (deliver);
